@@ -1,8 +1,11 @@
-{% extends 'base/body.html' %} {% block content %}
-<div class="container mt-4">
+{% extends 'base/body.html' %}
+{% block headercontect %}
+    {% include 'base/header/overlapHeader.html' %}
+{% endblock %}
+{% block content %}
+<div class="container-fluid mt-n10">
   <!-- Encabezado -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Historial de Ventas</h2>
 
     <a href="{% url 'inventario:venta' %}" class="btn btn-primary">
       Ir al Punto de Venta
@@ -36,6 +39,7 @@
 
               <!-- Total -->
               <td class="text-end text-success fw-bold">${{ v.total }}</td>
+
               <!-- Estado -->
               <td class="text-center">
                 {% if v.estado == "cancelada" %}
@@ -61,7 +65,7 @@
             {% empty %}
 
             <tr>
-              <td colspan="4" class="text-center text-muted py-4">
+              <td colspan="5" class="text-center text-muted py-4">
                 No se han registrado ventas todavía
               </td>
             </tr>
@@ -73,7 +77,9 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block script %}
+{% endblock %}
+
+{% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -95,7 +101,6 @@
           headers: {
             // 🔐 Protección de Django contra ataques (CSRF)
             "X-CSRFToken": "{{ csrf_token }}",
-
             "Content-Type": "application/json",
           },
         })

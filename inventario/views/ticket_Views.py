@@ -21,7 +21,7 @@ def detalle_venta_nota(request, id):
 
     return render(
         request,
-        "detalleVentaNota.html",
+        "puntoVenta/detalleVentaNota.html",
         {
             "venta": venta,
             "detalles": detalles,
@@ -52,4 +52,4 @@ def configuracion_ticket(request):
     else:
         form = ConfiguracionTicketForm(instance=configuracion)
 
-    return render(request, "configuracionTicket.html", {"form": form})
+    return render(request, "puntoVenta/configuracionTicket.html", {"form": form})

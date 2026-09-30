@@ -57,7 +57,7 @@ urlpatterns = [
     
     #VENTA
     path('venta/', views.VentaView, name='venta'),
-    path("guardar_venta/", views.guardar_venta, name="guardar_venta"),
+    path("guardar_venta/", views.GuardarVenta.as_view(), name="guardar_venta"),
     path("ventas_historial/", views.ventas_historial, name="ventas_historial"),
     path('venta/<int:id>/', views.detalle_venta_nota, name='detalle_venta_nota'),
     path("venta/<int:id>/ticket/",views.imprimir_ticket,name="imprimir_ticket",),

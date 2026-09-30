@@ -12,7 +12,6 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 from django.http import HttpResponse
 from inventario.models import Producto
-from django.http import JsonResponse
 from django.db.models import Q
 from inventario.services.inventario_service import InventarioService
 
@@ -154,9 +153,12 @@ def buscar_productos_ajax(request):
     productos = Producto.objects.select_related('marca').all()
 
     if q:
-        productos = productos.filter(
-            Q(codigo__icontains=q) | Q(nombre__icontains=q)
-        )
+        for palabra in q.split():
+            productos = productos.filter(
+                Q(codigo__icontains=palabra)
+                | Q(nombre__icontains=palabra)
+                | Q(marca__nombre__icontains=palabra)
+            )
 
     productos = productos.order_by('nombre')[:20]
 

@@ -28,7 +28,7 @@
       </div>
 
       <!-- FILTROS -->
-      <form method="GET" class="row g-2 mb-4">
+      <form method="GET" id="formFiltros" class="row g-2 mb-4">
         <div class="col-6 col-md-3">
           <label class="form-label small text-muted mb-1">Desde</label>
           <input type="date" name="fecha_inicio" id="fechaInicio" class="form-control form-control-sm" value="{{ fecha_inicio|default:'' }}">
@@ -85,6 +85,7 @@
               <td>
                 <span class="badge bg-light text-dark border">{{ m.producto.codigo }}</span>
                 {{ m.producto.nombre }}
+                <span class="badge bg-light text-dark border">{{ m.producto.marca }}</span>
               </td>
               <td class="small">{{ m.get_motivo_display }}</td>
               <td class="text-center fw-bold">{{ m.cantidad }}</td>
@@ -109,12 +110,19 @@
   // Ajusta el link de "Descargar PDF" para que lleve los mismos filtros que ves en pantalla
   function actualizarLinkPdf() {
     const params = new URLSearchParams(window.location.search);
-    document.getElementById('linkDescargarPdf').href = "{% url 'inventario:historial_movimientos_pdf' %}?" + params.toString();
+    const link = document.getElementById('linkDescargarPdf');
+    if (link) {
+      link.href = "{% url 'inventario:historial_movimientos_pdf' %}?" + params.toString();
+    }
   }
-  actualizarLinkPdf();
+
+  document.addEventListener('DOMContentLoaded', actualizarLinkPdf);
 
   function formatoFecha(d) {
-    return d.toISOString().split('T')[0]; // YYYY-MM-DD
+    const anio = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
   }
 
   function filtroRapido(opcion) {
@@ -138,7 +146,7 @@
 
     document.getElementById('fechaInicio').value = formatoFecha(desde);
     document.getElementById('fechaFin').value = formatoFecha(hasta);
-    document.querySelector('form').submit();
+    document.getElementById('formFiltros').submit();
   }
 </script>
 {% endblock %}

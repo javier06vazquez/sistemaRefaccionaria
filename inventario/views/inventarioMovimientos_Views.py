@@ -1,15 +1,12 @@
 import json
-from django.views import View
 from django.shortcuts import render
 from django.http import JsonResponse
 from datetime import timedelta
 from django.views import View
-from django.shortcuts import render
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from xhtml2pdf import pisa
-from inventario.models import MovimientoInventario
 from inventario.models import MovimientoInventario
 from inventario.services.inventario_service import InventarioService
 

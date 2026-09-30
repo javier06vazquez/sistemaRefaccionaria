@@ -93,6 +93,7 @@
       itemId: contadorId++,
       producto_id: producto.id,
       codigo: producto.codigo,
+      marca: producto.marca,
       nombre: producto.nombre,
       stock: producto.stock,
       cantidad: 1,
@@ -149,6 +150,7 @@
         <td>
           <span class="badge bg-light text-dark border me-1">${item.codigo}</span>
           ${item.nombre}
+          <span class="badge bg-light text-dark border me-1">${item.marca}</span>
           <div class="small text-muted">Stock: ${item.stock}</div>
         </td>
         <td>
