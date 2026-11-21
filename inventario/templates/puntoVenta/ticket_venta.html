@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Ticket #{{ venta.id }}</title>
+  <style>
+    /* Ancho IMPRIMIBLE del rollo:
+       rollo de 80 mm -> 72mm    |    rollo de 58 mm -> 48mm */
+    :root { --ancho: 72mm; }
+
+    @page { margin: 0; }              /* sin márgenes del navegador */
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 3mm 2mm;
+      width: var(--ancho);
+      font-family: "Courier New", monospace;
+      font-size: 13px;
+      font-weight: 600;               /* la térmica imprime pálido: un poco más grueso */
+      color: #000;
+    }
+
+    .centro  { text-align: center; }
+    .empresa { font-size: 17px; font-weight: 800; }
+    .chico   { font-size: 11px; }
+
+    hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+
+    table { width: 100%; border-collapse: collapse; }
+    td    { padding: 1px 0; vertical-align: top; }
+    .num  { text-align: right; white-space: nowrap; }
+
+    .total { font-size: 20px; font-weight: 800; text-align: right; }
+
+    /* El botón se ve en pantalla, pero no se imprime */
+    .no-imprimir { margin-top: 10px; width: 100%; padding: 8px; font-size: 14px; }
+    @media print { .no-imprimir { display: none; } }
+  </style>
+</head>
+<body>
+
+  {% if configuracion %}
+    <div class="centro empresa">{{ configuracion.nombre_empresa }}</div>
+    {% if configuracion.direccion %}<div class="centro chico">{{ configuracion.direccion }}</div>{% endif %}
+    {% if configuracion.telefono %}<div class="centro chico">Tel: {{ configuracion.telefono }}</div>{% endif %}
+  {% endif %}
+
+  <hr>
+  <div>Venta #{{ venta.id }}</div>
+  <div>{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+  <div>Atendió: {{ venta.usuario.username|default:"—" }}</div>
+  <hr>
+
+  <table>
+    {% for d in detalles %}
+      <!-- Renglón 1: el nombre ocupa todo el ancho -->
+      <tr><td colspan="2">{{ d.nombre_mostrar }}</td></tr>
+      <!-- Renglón 2: cantidad x precio ........ importe -->
+      <tr>
+        <td>{{ d.cantidad }} x ${{ d.precio }}</td>
+        <td class="num">${{ d.subtotal }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  <hr>
+  <div class="total">TOTAL ${{ venta.total }}</div>
+  <hr>
+
+  {% if configuracion.mensaje_final %}
+    <div class="centro chico">{{ configuracion.mensaje_final }}</div>
+  {% endif %}
+
+  <button class="no-imprimir" onclick="window.print()">Imprimir otra vez</button>
+
+  <script>
+    // Al abrir la página, manda a imprimir sola
+    window.addEventListener("load", function () {
+      window.print();
+    });
+  </script>
+</body>
+</html>

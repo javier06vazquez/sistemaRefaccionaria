@@ -67,7 +67,7 @@ def detalle_venta_ajax(request, venta_id):
     detalles = DetalleVenta.objects.filter(venta_id=venta_id).select_related('producto')
     data = [
         {
-            'producto': d.producto.nombre,
+            'producto': d.producto.mostrar,
             'cantidad': d.cantidad,
             'precio': str(d.precio),
             'subtotal': str(d.subtotal),

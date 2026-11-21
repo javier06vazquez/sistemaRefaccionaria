@@ -1,24 +1,17 @@
 {% extends 'base/body.html' %}
-{% load static %}
-{% block headercontect %}
-    {% include 'base/header/overlapHeader.html' %}
-{% endblock %}
-{% block content %}
+{% load static %} {% block headercontect %}
+{% include 'base/header/overlapHeader.html' %}
+{% endblock %} {% block content %}
 <div class="container-fluid mt-n10">
   <div class="card shadow-sm">
-    <div
-      class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2"
-    >
-      <span
-        ><i class="fas fa-file-invoice text-primary"></i> Nota de Venta</span
-      >
-      <button
-        type="button"
-        class="btn btn-primary btn-sm"
-        onclick="abrirBuscador()"
-      >
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span><i class="fas fa-file-invoice text-primary"></i> Nota de Venta</span>
+      <button type="button" class="btn btn-primary btn-sm" onclick="abrirBuscador()">
         <i class="fas fa-search"></i> Buscar producto
         <span class="badge bg-light text-primary ms-1">F2</span>
+      </button>
+      <button type="button" class="btn btn-outline-primary btn-sm" onclick="agregarConceptoLibre()">
+        <i class="fas fa-pen"></i> Manual
       </button>
     </div>
 
@@ -28,46 +21,36 @@
         <div class="col-12 col-md-4">
           <label class="form-label small text-muted mb-1">Tipo de venta</label>
           <div class="btn-group w-100" role="group">
-            <button
-              type="button"
-              class="btn btn-outline-primary active"
-              id="btnContado"
-              onclick="cambiarModoVenta('contado')"
-            >
+            <button type="button" class="btn btn-outline-primary active" id="btnContado"
+              onclick="cambiarModoVenta('contado')">
               <i class="fas fa-money-bill-wave"></i> Contado
             </button>
-            <button
-              type="button"
-              class="btn btn-outline-danger"
-              id="btnCredito"
-              onclick="cambiarModoVenta('credito')"
-            >
+            <button type="button" class="btn btn-outline-danger" id="btnCredito" onclick="cambiarModoVenta('credito')">
               <i class="fas fa-hand-holding-usd"></i> Crédito
             </button>
           </div>
         </div>
 
-        <div
-          class="col-12 col-md-8"
-          id="seccionClienteCredito"
-          style="display: none"
-        >
-          <label class="form-label small text-muted mb-1"
-            >Cliente de crédito</label
-          >
+        <!-- SWITCH: ¿esta venta descuenta inventario? -->
+        <div class="col-12 col-md-3">
+          <label class="form-label small text-muted mb-1">Inventario</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="switchStock" checked
+              onchange="cambiarSwitchStock()" />
+            <label class="form-check-label small fw-semibold" for="switchStock" id="textoSwitchStock">
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
+                <i class="fas fa-check-circle me-1"></i> ACTIVO
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-5" id="seccionClienteCredito" style="display: none">
+          <label class="form-label small text-muted mb-1">Cliente de crédito</label>
           <div class="input-group">
-            <input
-              type="text"
-              id="inputClienteSeleccionado"
-              class="form-control"
-              readonly
-              placeholder="Toca aquí para buscar un cliente..."
-            />
-            <button
-              type="button"
-              class="btn btn-outline-danger"
-              onclick="abrirBuscadorCliente()"
-            >
+            <input type="text" id="inputClienteSeleccionado" class="form-control" readonly
+              placeholder="Toca aquí para buscar un cliente..." />
+            <button type="button" class="btn btn-outline-danger" onclick="abrirBuscadorCliente()">
               <i class="fas fa-search"></i>
             </button>
           </div>
@@ -76,10 +59,7 @@
 
       <!-- TABLA DE PARTIDAS -->
       <div class="table-responsive">
-        <table
-          class="table table-bordered table-sm align-middle mb-0"
-          id="tablaPartidas"
-        >
+        <table class="table table-bordered table-sm align-middle mb-0" id="tablaPartidas">
           <thead class="table-light">
             <tr class="text-center small text-uppercase text-muted">
               <th style="width: 36px">#</th>
@@ -132,17 +112,10 @@
 
       <!-- ACCIONES -->
       <div class="d-grid d-md-flex justify-content-md-end gap-2 mt-3">
-        <button
-          class="btn btn-outline-danger w-100 w-md-auto"
-          onclick="limpiar()"
-        >
+        <button class="btn btn-outline-danger w-100 w-md-auto" onclick="limpiar()">
           <i class="fas fa-trash"></i> Limpiar
         </button>
-        <button
-          class="btn btn-success btn-lg w-100 w-md-auto"
-          id="btnCobrar"
-          onclick="cobrar()"
-        >
+        <button class="btn btn-success btn-lg w-100 w-md-auto" id="btnCobrar" onclick="cobrar()">
           <i class="fas fa-check-circle"></i> Cobrar
         </button>
       </div>
@@ -154,51 +127,25 @@
 {% include 'partials/buscarProductosAjax.html' %}
 
 <!-- ================= MODAL DE BÚSQUEDA DE CLIENTE DE CRÉDITO ================= -->
-<div
-  class="modal fade"
-  id="modalBuscarCliente"
-  tabindex="-1"
-  aria-hidden="true"
->
+<div class="modal fade" id="modalBuscarCliente" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="fas fa-user-tie"></i> Buscar cliente de crédito
         </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-        ></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <input
-          type="text"
-          id="inputBuscarCliente"
-          class="form-control form-control-lg mb-3"
-          placeholder="Escribe el nombre del cliente..."
-          autocomplete="off"
-        />
+        <input type="text" id="inputBuscarCliente" class="form-control form-control-lg mb-3"
+          placeholder="Escribe el nombre del cliente..." autocomplete="off" />
 
-        <div
-          id="resultadosCliente"
-          class="list-group"
-          style="max-height: 40vh; overflow-y: auto"
-        ></div>
+        <div id="resultadosCliente" class="list-group" style="max-height: 40vh; overflow-y: auto"></div>
 
-        <div
-          id="sinResultadosCliente"
-          class="text-center text-muted py-4"
-          style="display: none"
-        >
+        <div id="sinResultadosCliente" class="text-center text-muted py-4" style="display: none">
           No se encontraron clientes.
           <br />
-          <a
-            href="{% url 'inventario:clientes_credito_lista' %}"
-            target="_blank"
-            class="small"
-          >
+          <a href="{% url 'inventario:clientes_credito_lista' %}" target="_blank" class="small">
             Dar de alta un cliente nuevo
           </a>
         </div>
@@ -207,8 +154,7 @@
   </div>
 </div>
 
-{% endblock %} 
-{% block script %}
+{% endblock %} {% block script %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'js/buscarProductoAjax.js' %}"></script>
 
@@ -217,6 +163,39 @@
   let partidas = [];
   let filaIdCounter = 0;
 
+  /* ============== SWITCH DE STOCK ============== */
+  // Una sola fuente de verdad: siempre se lee del switch, no de una variable aparte.
+  function descontarStock() {
+    return document.getElementById("switchStock").checked;
+  }
+
+  function cambiarSwitchStock() {
+    const texto = document.getElementById("textoSwitchStock");
+
+    if (descontarStock()) {
+      texto.innerHTML = `
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">
+          <i class="fas fa-check-circle me-1"></i> ACTIVO
+        </span>`;
+    } else {
+      texto.innerHTML = `
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2">
+          <i class="fas fa-ban me-1"></i> INACTIVO
+        </span>`;
+    }
+
+    renderTabla(); // vuelve a pintar las cantidades con o sin límite de stock
+  }
+
+  // Convierte < > " ' & en texto inofensivo antes de meterlo con innerHTML.
+  function escapeHtml(valor) {
+    return String(valor ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
 
   /* ============== TIPO DE VENTA: CONTADO / CRÉDITO ============== */
   let modoVenta = "contado";
@@ -319,10 +298,15 @@
   function abrirBuscador() {
     BuscadorProducto.abrir(
       function (producto) {
-        if (producto.stock <= 0) return;
+        if (descontarStock() && producto.stock <= 0) return;
         agregarProducto(producto);
       },
-      { soloConStock: true },
+      {
+        // Solo bloquea los agotados si esta venta descuenta inventario
+        soloConStock: descontarStock(),
+        // Si no se encuentra el producto, ofrece agregarlo como concepto libre
+        onSinResultados: agregarConceptoLibre,
+      },
     );
   }
 
@@ -338,7 +322,7 @@
     let fila = partidas.find((p) => p.id === producto.id);
 
     if (fila) {
-      if (fila.cantidad + 1 > producto.stock) {
+      if (descontarStock() && fila.cantidad + 1 > producto.stock) {
         Swal.fire(
           "Stock insuficiente",
           `Solo hay ${producto.stock} unidades de ${producto.nombre}.`,
@@ -364,6 +348,65 @@
     renderTabla();
   }
 
+  /* ============== CONCEPTO LIBRE (no es producto del inventario) ============== */
+  function agregarConceptoLibre(textoInicial = "") {
+    Swal.fire({
+      title: "Concepto libre",
+      html: `
+        <input id="clDescripcion" class="swal2-input" placeholder="Descripción" maxlength="200">
+        <input id="clCantidad" class="swal2-input" type="number" min="1" value="1" placeholder="Cantidad">
+        <input id="clPrecio" class="swal2-input" type="number" min="0" step="0.01" placeholder="Precio unitario">
+        <label class="mt-3 d-block">
+          <input id="clIva" type="checkbox"> El precio incluye IVA
+        </label>`,
+      showCancelButton: true,
+      confirmButtonText: "Agregar",
+      cancelButtonText: "Cancelar",
+      focusConfirm: false,
+      didOpen: () => {
+        document.getElementById("clDescripcion").value = textoInicial;
+        document.getElementById("clPrecio").focus();
+      },
+      preConfirm: () => {
+        const descripcion = document
+          .getElementById("clDescripcion")
+          .value.trim();
+        const cantidad = parseInt(document.getElementById("clCantidad").value);
+        const precio = parseFloat(document.getElementById("clPrecio").value);
+
+        if (!descripcion)
+          return Swal.showValidationMessage("Escribe la descripción");
+        if (isNaN(cantidad) || cantidad <= 0)
+          return Swal.showValidationMessage("La cantidad debe ser mayor a 0");
+        if (isNaN(precio) || precio < 0)
+          return Swal.showValidationMessage("Escribe un precio válido");
+
+        return {
+          descripcion: descripcion,
+          cantidad: cantidad,
+          precio: precio,
+          tieneIva: document.getElementById("clIva").checked,
+        };
+      },
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      const c = result.value;
+
+      partidas.push({
+        filaId: filaIdCounter++,
+        id: null, // null = no es un producto del inventario
+        codigo: "",
+        nombre: c.descripcion,
+        cantidad: c.cantidad,
+        precio: c.precio,
+        stock: null, // no tiene existencias que cuidar
+        tieneIva: c.tieneIva,
+        importe: c.precio * c.cantidad,
+      });
+      renderTabla();
+    });
+  }
+
   function onCantidadChange(filaId, valor) {
     const fila = partidas.find((p) => p.filaId === filaId);
     if (!fila) return;
@@ -371,7 +414,7 @@
     let cantidad = parseInt(valor);
     if (isNaN(cantidad) || cantidad <= 0) cantidad = 1;
 
-    if (cantidad > fila.stock) {
+    if (descontarStock() && fila.id !== null && cantidad > fila.stock) {
       Swal.fire(
         "Stock insuficiente",
         `Solo hay ${fila.stock} unidades disponibles.`,
@@ -423,13 +466,18 @@
       html += `
         <tr>
           <td class="text-center text-muted">${index + 1}</td>
-          <td class="text-center"><span class="badge bg-light text-dark border">${p.codigo}</span></td>
-          <td>
-            ${p.nombre}
-            ${p.tieneIva ? '<span class="badge bg-secondary-subtle text-secondary ms-1">IVA</span>' : ""}
+          <td class="text-center">
+            ${p.id === null
+          ? '<span class="badge bg-primary-subtle text-primary">Libre</span>'
+          : `<span class="badge bg-light text-dark border">${escapeHtml(p.codigo)}</span>`
+        }
           </td>
           <td>
-            <input type="number" min="1" max="${p.stock}" value="${p.cantidad}"
+            ${escapeHtml(p.nombre)}
+            ${p.tieneIva ? '<span class="badge bg-secondary-subtle text-sec          span>' : ""}
+          </td>
+          <td>
+            <input               ${descontarStock() && p.id !== null ? `max="${p.stock}"` : ""} value="${p.cantidad}"
                 class="form-control form-control-sm celda-cantidad-input mx-auto"
                 onchange="onCantidadChange(${p.filaId}, this.value)">
           </td>
@@ -479,7 +527,7 @@
     if (partidas.length === 0) {
       Swal.fire(
         "Sin productos",
-        "Agrega al menos un producto a la nota.",
+        "Agrega al menos un producto o concepto a la nota.",
         "info",
       );
       return;
@@ -500,7 +548,6 @@
       nombre: p.nombre,
       cantidad: p.cantidad,
       precio: p.precio,
-      subtotal: p.importe,
     }));
 
     const esCredito = modoVenta === "credito";
@@ -529,8 +576,8 @@
         },
         body: JSON.stringify({
           carrito: carrito,
-          total: total,
           es_credito: esCredito,
+          descontar_stock: descontarStock(),
           cliente_credito_id: esCredito ? clienteCreditoSeleccionado.id : null,
         }),
       })

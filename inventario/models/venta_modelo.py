@@ -16,5 +16,9 @@ class Venta(models.Model):
     def __str__(self):
         return f"Venta {self.id}"
     
+    #Guarda si esta venta desconto stock. Asi, al cancelarla solo se regresa 
+    #stock si de verdad se habia quitado.
+    # default=true porque todas las ventas ya existentes descontaron stock, y no queremos que al cancelarlas se regrese stock.
+    descuenta_stock = models.BooleanField(default=True)  # Nuevo campo para indicar si se descuenta el stock
     
     # en models/venta.py

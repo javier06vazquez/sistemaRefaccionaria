@@ -29,19 +29,17 @@ def detalle_venta_nota(request, id):
         },
     )
 
+
 def imprimir_ticket(request, id):
+    """Página SOLO con el ticket, sin menú ni layout, lista para la impresora térmica."""
     venta = get_object_or_404(Venta, id=id)
-    detalles = venta.detalles.all()
-
-    return render(
-        request,
-        "ticket_venta.html",
-        {
-            "venta": venta,
-            "detalles": detalles,
-        },
-    )
-
+    return render(request, "puntoVenta/ticket_venta.html", {
+        "venta": venta,
+        # select_related: trae el producto de cada renglón en la MISMA consulta
+        "detalles": venta.detalles.select_related("producto"),
+        "configuracion": ConfiguracionTicket.objects.first(),
+    })
+    
 def configuracion_ticket(request):
     configuracion = ConfiguracionTicket.objects.first()
     if request.method == "POST":

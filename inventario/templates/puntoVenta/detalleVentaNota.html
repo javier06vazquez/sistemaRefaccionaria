@@ -1,71 +1,5 @@
 {% extends 'base/body.html' %} {% block content %}
 
-<style>
-  /* ==============================
-   ESTILOS PARA IMPRIMIR
-============================== */
-
-  @media print {
-    /* Ocultar la vista normal */
-    .pantalla {
-      display: none !important;
-    }
-
-    /* Mostrar únicamente el ticket */
-    .ticket {
-      display: block !important;
-    }
-
-    /* Configuración de la hoja */
-    @page {
-      size: 80mm auto;
-      margin: 5mm;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      background: #fff;
-      font-family: monospace;
-    }
-  }
-
-  /* El ticket permanece oculto mientras estamos en pantalla */
-  .ticket {
-    display: none;
-  }
-
-  .ticket h4,
-  .ticket p {
-    margin: 2px;
-    text-align: center;
-  }
-
-  .ticket table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .ticket th,
-  .ticket td {
-    padding: 3px;
-    font-size: 12px;
-  }
-
-  .ticket hr {
-    border: none;
-    border-top: 1px dashed black;
-  }
-
-  .total {
-    font-size: 18px;
-    font-weight: bold;
-    text-align: right;
-  }
-</style>
-
-<!-- =============== VISTA NORMAL ===================== -->
-
 <div class="pantalla">
   <div class="container py-4">
     <div class="card shadow">
@@ -111,8 +45,8 @@
             {% for d in detalles %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td>{{ d.producto.codigo }}</td>
-              <td>{{ d.producto.nombre }}</td>
+              <td>{{ d.codigo_mostrar }}</td>
+              <td>{{ d.nombre_mostrar }}</td>
               <td>{{ d.cantidad }}</td>
               <td>${{ d.precio }}</td>
               <td>${{ d.subtotal }}</td>
@@ -129,64 +63,16 @@
             Volver
           </a>
 
-          <button class="btn btn-success" onclick="window.print()">
+          <a href="{% url 'inventario:imprimir_ticket' venta.id %}"
+             target="_blank"
+             class="btn btn-success">
             <i class="fas fa-print"></i>
             Imprimir Ticket
-          </button>
+          </a>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================================================= -->
-<!-- =================== TICKET ======================= -->
-<!-- ================================================= -->
-
-<div class="ticket">
-  <h3 class="text-center">{{ configuracion.nombre_empresa }}</h3>
-
-  <p>{{ configuracion.direccion }}</p>
-
-  <p>Teléfono: {{ configuracion.telefono }}</p>
-
-  <p>{{ configuracion.correo }}</p>
-  <hr />
-  <p>Venta #{{ venta.id }}</p>
-  <p>{{ venta.fecha|date:"d/m/Y H:i" }}</p>
-  <div class="text-center small">
-    Vendió: {{ venta.usuario.username|default:"—" }}
-  </div>
-  <hr />
-  <table>
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th class="text-center">Cant</th>
-        <th class="text-center">Precio</th>
-        <th class="text-left">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for d in detalles %}
-      <tr>
-        <td>{{ d.producto.nombre }}</td>
-        <td align="center">{{ d.cantidad }}</td>
-        <td align="center">{{ d.precio }}</td>
-        <td align="left">${{ d.subtotal }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <hr />
-  <div class="total">
-    TOTAL
-    <br />
-    ${{ venta.total }}
-  </div>
-  <hr />
-  <hr />
-
-  <p class="text-center">{{ configuracion.mensaje_final }}</p>
-</div>
 {% endblock %}

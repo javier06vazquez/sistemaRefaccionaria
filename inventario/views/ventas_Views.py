@@ -5,6 +5,9 @@ from inventario.models.venta_modelo import Venta
 from django.http import JsonResponse
 import json
 from inventario.services.venta_service import VentaService
+import logging
+
+logger = logging.getLogger(__name__)
 
 def VentaView(request):
     productos = Producto.objects.all()
@@ -22,22 +25,27 @@ class GuardarVenta(View):
         try:
             data = json.loads(request.body)
 
+            # Ya no se manda el total: el service lo calcula con los renglones
             resultado = VentaService.registrar_venta(
                 carrito=data.get("carrito", []),
-                total=data.get("total", 0),
                 es_credito=data.get("es_credito", False),
                 cliente_credito_id=data.get("cliente_credito_id"),
                 usuario=request.user if request.user.is_authenticated else None,
+                descontar_stock=data.get("descontar_stock", True),
             )
-
-            # La respuesta usa las mismas claves que espera el JavaScript del punto de venta
             return JsonResponse({"ok": True, **resultado})
 
+        except json.JSONDecodeError:
+            # Va ANTES de ValueError porque JSONDecodeError es hija de ValueError:
+            # Python usa el primer except que coincide.
+            return JsonResponse({"ok": False, "error": "Los datos de la venta llegaron dañados."})
         except ValueError as e:
+            # Errores que escribimos nosotros para el cajero: sí se muestran
             return JsonResponse({"ok": False, "error": str(e)})
-        except Exception as e:
-            return JsonResponse({"ok": False, "error": str(e)})
-        
+        except Exception:
+            # Lo inesperado se guarda en el log, no se le enseña al navegador
+            logger.exception("Error al guardar venta")
+            return JsonResponse({"ok": False, "error": "Ocurrió un error al guardar la venta."})     
 def ventas_historial(request):
     """Trae todas las ventas del punto de venta ordenadas desde la más reciente"""
     ventas = Venta.objects.all().order_by("-fecha")

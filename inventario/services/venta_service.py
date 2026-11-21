@@ -1,4 +1,7 @@
+from decimal import Decimal, InvalidOperation
+
 from django.db import transaction
+
 from inventario.models import Producto, Venta, DetalleVenta
 from inventario.services.credito_service import CreditoService
 
@@ -6,91 +9,135 @@ from inventario.services.credito_service import CreditoService
 class VentaService:
 
     @staticmethod
-    @transaction.atomic
-    def registrar_venta(carrito, total, es_credito=False, cliente_credito_id=None, usuario=None):
+    def _limpiar_carrito(carrito):
         """
-        Registra una venta (contado o crédito) y descuenta el stock.
+        Valida cada renglón que manda el navegador y lo convierte a datos seguros.
+        Nunca confiamos en los números del navegador: el subtotal y el total
+        se vuelven a calcular aquí.
 
-        carrito: lista de dicts [{id, nombre, cantidad, precio, subtotal}, ...]
-        total: total de la venta
-        es_credito: True si se carga a la cuenta de un cliente de crédito
-        cliente_credito_id: ID del cliente (obligatorio si es_credito=True)
-        usuario: quien registra la venta
+        Cada renglón puede ser:
+          - un producto registrado:  {"id": 15, "nombre": "...", "cantidad": 2, "precio": 120}
+          - un concepto libre:       {"id": None, "nombre": "Mano de obra", "cantidad": 1, "precio": 200}
+        """
+        renglones = []
+        for item in carrito:
+            try:
+                cantidad = int(item.get("cantidad", 0))
+                precio = Decimal(str(item.get("precio", 0))).quantize(Decimal("0.01"))
+            except (ValueError, TypeError, InvalidOperation):
+                raise ValueError("Hay una cantidad o un precio inválido en la nota.")
 
-        Devuelve un dict con el resultado: {'tipo': 'credito'} o {'tipo': 'contado', 'venta_id': X}
+            if cantidad <= 0:
+                raise ValueError("La cantidad debe ser mayor a cero.")
+            if precio < 0:
+                raise ValueError("El precio no puede ser negativo.")
+
+            producto_id = item.get("id") or None
+            descripcion = str(item.get("nombre", "")).strip()[:200]
+
+            if producto_id is None and not descripcion:
+                raise ValueError("Un concepto libre necesita descripción.")
+
+            renglones.append({
+                "producto_id": producto_id,
+                "descripcion": descripcion,
+                "cantidad": cantidad,
+                "precio": precio,
+                "subtotal": precio * cantidad,
+            })
+        return renglones
+
+    @staticmethod
+    @transaction.atomic
+    def registrar_venta(carrito, es_credito=False, cliente_credito_id=None,
+                        usuario=None, descontar_stock=True):
+        """
+        Registra una venta (contado o crédito).
+        descontar_stock: el switch del punto de venta. False = no toca inventario.
+
+        Devuelve {'tipo': 'credito'} o {'tipo': 'contado', 'venta_id': X}
         """
         if not carrito:
-            raise ValueError("El carrito está vacío.")
-
+            raise ValueError("La nota está vacía.")
         if es_credito and not cliente_credito_id:
             raise ValueError("Selecciona un cliente de crédito.")
 
-        # 1) Descuenta stock — esto aplica igual para contado y crédito
-        for item in carrito:
-            producto = Producto.objects.select_for_update().get(id=item["id"])
-            if producto.stock < item["cantidad"]:
-                raise ValueError(f"Stock insuficiente para {producto.nombre}.")
-            producto.stock -= item["cantidad"]
-            producto.save()
+        renglones = VentaService._limpiar_carrito(carrito)
+        descontar = bool(descontar_stock)
 
-        # 2) Camino CRÉDITO: no se crea una Venta, se carga a la cuenta del cliente
+        # 1) Productos registrados: tomar el nombre REAL de la base de datos
+        #    y, solo si el switch está prendido, descontar stock.
+        for r in renglones:
+            if r["producto_id"] is None:
+                continue  # concepto libre: no toca inventario
+
+            producto = Producto.objects.select_for_update().get(id=r["producto_id"])
+            r["descripcion"] = producto.nombre
+
+            if descontar:
+                if producto.stock < r["cantidad"]:
+                    raise ValueError(f"Stock insuficiente para {producto.nombre}.")
+                producto.stock -= r["cantidad"]
+                producto.save()
+
+        total = sum(r["subtotal"] for r in renglones)
+
+        # 2) Camino CRÉDITO: se carga a la cuenta del cliente
         if es_credito:
-            nombres = ", ".join(
-                [f"{item['cantidad']}x {item['nombre']}" for item in carrito]
-            )
-            concepto = f"Venta a crédito: {nombres}"
-
+            nombres = ", ".join(f"{r['cantidad']}x {r['descripcion']}" for r in renglones)
             productos_detalle = [
                 {
-                    "producto_id": item["id"],
-                    "concepto": item["nombre"],
-                    "cantidad": item["cantidad"],
-                    "precio": item["precio"],
+                    "producto_id": r["producto_id"],
+                    "concepto": r["descripcion"],
+                    "cantidad": r["cantidad"],
+                    "precio": float(r["precio"]),
+                    # Al cancelar el cargo, solo se regresa stock si aquí se descontó
+                    "descontado": descontar and r["producto_id"] is not None,
                 }
-                for item in carrito
+                for r in renglones
             ]
-
             CreditoService.registrar_cargo(
                 cliente_id=cliente_credito_id,
                 monto=total,
-                concepto=concepto,
+                concepto=f"Venta a crédito: {nombres}",
                 usuario=usuario,
                 productos=productos_detalle,
             )
             return {"tipo": "credito"}
 
-        # 3) Camino CONTADO: crea la Venta y sus DetalleVenta
+        # 3) Camino CONTADO: crea la Venta y sus renglones
         venta = Venta.objects.create(
             total=total,
             estado="activa",
             usuario=usuario,
+            descuenta_stock=descontar,
         )
-        for item in carrito:
+        for r in renglones:
             DetalleVenta.objects.create(
                 venta=venta,
-                producto_id=item["id"],
-                cantidad=item["cantidad"],
-                precio=item["precio"],
-                subtotal=item["subtotal"],
+                producto_id=r["producto_id"],
+                descripcion=r["descripcion"],
+                cantidad=r["cantidad"],
+                precio=r["precio"],
+                subtotal=r["subtotal"],
             )
         return {"tipo": "contado", "venta_id": venta.id}
     
     @staticmethod
     @transaction.atomic
     def cancelar_venta(venta_id):
-        """
-        Cancela una venta y regresa el stock de los productos vendidos.
-        """
+        """Cancela una venta. Regresa stock solo si esa venta lo había descontado."""
         venta = Venta.objects.select_for_update().get(id=venta_id)
 
         if venta.estado == "cancelada":
             raise ValueError("La venta ya está cancelada.")
 
-        detalles = DetalleVenta.objects.filter(venta=venta)
-        for d in detalles:
-            producto = d.producto
-            producto.stock += d.cantidad
-            producto.save()
+        if venta.descuenta_stock:
+            for d in venta.detalles.filter(producto__isnull=False):
+                producto = Producto.objects.select_for_update().get(id=d.producto_id)
+                producto.stock += d.cantidad
+                producto.save()
 
         venta.estado = "cancelada"
         venta.save()
+        return venta
