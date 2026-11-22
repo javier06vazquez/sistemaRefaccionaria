@@ -6,7 +6,7 @@
   <style>
     /* Ancho IMPRIMIBLE del rollo:
        rollo de 80 mm -> 72mm    |    rollo de 58 mm -> 48mm */
-    :root { --ancho: 72mm; }
+    :root { --ancho: 68mm; }
 
     @page { margin: 0; }              /* sin márgenes del navegador */
 
@@ -14,7 +14,7 @@
 
     body {
       margin: 0;
-      padding: 3mm 2mm;
+      padding: 0mm 0 1mm 3mm;
       width: var(--ancho);
       font-family: "Courier New", monospace;
       font-size: 13px;
@@ -28,10 +28,13 @@
 
     hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
 
-    table { width: 100%; border-collapse: collapse; }
-    td    { padding: 1px 0; vertical-align: top; }
-    .num  { text-align: right; white-space: nowrap; }
-
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { padding: 1px 0; vertical-align: middle; font-size: 12px; }
+    th { text-align: left; border-bottom: 3px double #000; padding-bottom: 2px; }
+    .num { text-align: right; white-space: nowrap; }
+    .cant { text-align: center; font-weight: 800; }
+    .desc { overflow-wrap: anywhere; padding-left: 2mm; padding-right: 2mm; }
+    th.desc { white-space: nowrap; }
     .total { font-size: 20px; font-weight: 800; text-align: right; }
 
     /* El botón se ve en pantalla, pero no se imprime */
@@ -54,19 +57,34 @@
   <hr>
 
   <table>
-    {% for d in detalles %}
-      <!-- Renglón 1: el nombre ocupa todo el ancho -->
-      <tr><td colspan="2">{{ d.nombre_mostrar }}</td></tr>
-      <!-- Renglón 2: cantidad x precio ........ importe -->
+    <colgroup>
+      <col style="width: 16%">
+      <col style="width: 38%">
+      <col style="width: 23%">
+      <col style="width: 23%">
+    </colgroup>
+    <thead>
       <tr>
-        <td>{{ d.cantidad }} x ${{ d.precio }}</td>
-        <td class="num">${{ d.subtotal }}</td>
+        <th class="cant">CANT</th>
+        <th class="desc">DESCRIPCIÓN</th>
+        <th class="num">P/U</th>
+        <th class="num">IMPORTE</th>
       </tr>
-    {% endfor %}
+    </thead>
+    <tbody>
+      {% for d in detalles %}
+      <tr>
+        <td class="cant">{{ d.cantidad }}</td>
+        <td class="desc">{{ d.nombre_mostrar|upper }}</td>
+        <td class="num">${{ d.precio|floatformat:1 }}</td>
+        <td class="num">${{ d.subtotal|floatformat:1 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 
   <hr>
-  <div class="total">TOTAL ${{ venta.total }}</div>
+  <div class="total">TOTAL ${{ venta.total|floatformat:"2g" }}</div>  <hr>
   <hr>
 
   {% if configuracion.mensaje_final %}
