@@ -9,6 +9,8 @@ from inventario.models.contactoProveedor_modelo import ContactoProveedor
 from inventario.models.producto_modelo import Producto
 from inventario.models.provedorEmpresa_modelo import ProveedorEmpresa
 from inventario.models.venta_modelo import Venta
+from inventario.services.inventario_service import InventarioService
+InventarioService.valor_inventario()
 
 
 class DashboardView(View):
@@ -48,5 +50,13 @@ class DashboardView(View):
             "total_contactos": total_contactos,
             "productos_con_iva": productos_con_iva,
         }
+        es_admin = (
+            request.user.is_superuser
+            or request.user.groups.filter(name="Administrador").exists()
+        )
+        context["puede_ver_inversion"] = es_admin
+        if es_admin:
+            context["inversion"] = InventarioService.valor_inventario()
+            
         return render(request, "dashboard/dashboard.html", context)
 

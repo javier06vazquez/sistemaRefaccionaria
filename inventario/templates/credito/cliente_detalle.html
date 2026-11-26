@@ -7,24 +7,29 @@
 
 <div class="container-fluid mt-n10">
   <div class="card shadow">
+
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <span><i class="fas fa-user-tie text-primary"></i> {{ cliente.nombre }}</span>
-      <div class="d-flex gap-2">
-        {% if not es_portal %}
-        <a href="{% url 'inventario:detalle_cliente_credito_pdf' cliente.id %}" ...>
-          ...Descargar PDF
-        </a>
-        <a href="{% url 'inventario:corte_saldo_cliente_pdf' cliente.id %}" ...>
-          ...Corte de saldo
-        </a>
-        <a href="{% url 'inventario:clientes_credito_lista' %}" ...>
-          ...Volver
-        </a>
-        {% endif %}
+      <div class="d-flex flex-wrap align-items-center">
+          <a href="{% url 'inventario:detalle_cliente_credito_pdf' cliente.id %}"
+            class="btn btn-primary btn-sm mr-3 mb-2">
+              <i class="bi bi-file-earmark-pdf-fill mr-1"></i>
+              Descargar PDF
+          </a>
+          <a href="{% url 'inventario:corte_saldo_cliente_pdf' cliente.id %}"
+            class="btn btn-success btn-sm mr-3 mb-2">
+              <i class="bi bi-calculator-fill mr-1"></i>
+              Corte de saldo
+          </a>
+          <a href="{% url 'inventario:clientes_credito_lista' %}"
+            class="btn btn-outline-secondary btn-sm mb-2">
+              <i class="bi bi-arrow-left-circle-fill mr-1"></i>
+              Volver
+          </a>
       </div>
     </div>
+    
     <div class="card-body">
-
       <div class="row g-2 mb-4">
         <div class="col-md-4">
           <div class="border rounded p-3 text-center">
