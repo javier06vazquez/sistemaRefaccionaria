@@ -78,7 +78,11 @@ class LoginRequeridoMiddleware:
 
     def __call__(self, request):
         ruta_es_publica = any(request.path.startswith(r) for r in self.RUTAS_PUBLICAS)
-
+        
+        # 1. Sin sesión y ruta no pública -> manda a login
+        if not request.user.is_authenticated and not ruta_es_publica:
+            return redirect(f"{reverse('login')}?next={request.path}")
+        
         # 2. Con sesión: solo pasa lo que está permitido explícitamente
         if request.user.is_authenticated and not ruta_es_publica:
             grupos_usuario = set(request.user.groups.values_list('name', flat=True))
