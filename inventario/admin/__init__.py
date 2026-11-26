@@ -10,3 +10,5 @@ from .proveedorEmpresa_admin import ProveedorEmpresaAdmin
 from .venta_admin import VentaAdmin
 from .detalleVenta_admin import DetalleVentaAdmin
 from .configuracionTicket_admin import ConfiguracionTicketAdmin
+
+from .clienteCredito_admin import *

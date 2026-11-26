@@ -5,9 +5,10 @@ from django.urls import reverse
 class LoginRequeridoMiddleware:
     """
     1. Exige login para cualquier página que no sea pública.
-    2. Cada rol restringido (Bodega, Mostrador, Oficina) solo puede ver
-       las rutas de su lista blanca.
-       Los superusuarios y usuarios sin ningún rol restringido ven todo, sin límite.
+    2. Superusuarios y el grupo Administrador ven todo.
+    3. Todos los demás SOLO ven las rutas de su rol (negar por defecto).
+       Un usuario sin rol no ve nada.
+    4. El rol Cliente solo ve /mi-credito/ (su propia cuenta).
     """
 
     RUTAS_PUBLICAS = [
@@ -67,6 +68,9 @@ class LoginRequeridoMiddleware:
             '/categoriaProducto/categoria_editar/',
             '/categoriaProducto/',
         ],
+        'Cliente': [
+            '/mi-credito/',
+        ],
     }
 
     def __init__(self, get_response):
@@ -75,28 +79,25 @@ class LoginRequeridoMiddleware:
     def __call__(self, request):
         ruta_es_publica = any(request.path.startswith(r) for r in self.RUTAS_PUBLICAS)
 
-        # 1. Sin sesión y ruta no pública -> manda a login
-        if not request.user.is_authenticated and not ruta_es_publica:
-            return redirect(f"{reverse('login')}?next={request.path}")
-
-        # 2. Con sesión: revisa si pertenece a un rol restringido
+        # 2. Con sesión: solo pasa lo que está permitido explícitamente
         if request.user.is_authenticated and not ruta_es_publica:
-            if request.user.is_superuser:
+            grupos_usuario = set(request.user.groups.values_list('name', flat=True))
+
+            # 2a. Acceso total: superusuario o grupo Administrador
+            if request.user.is_superuser or 'Administrador' in grupos_usuario:
                 return self.get_response(request)
 
-            grupos_usuario = set(request.user.groups.values_list('name', flat=True))
-            roles_restringidos = set(self.RUTAS_PERMITIDAS_POR_ROL.keys())
-            grupos_restrictivos_del_usuario = grupos_usuario & roles_restringidos
+            # 2b. Todos los demás: solo las rutas de SUS roles
+            permitido = False
+            for rol in grupos_usuario:
+                rutas_del_rol = self.RUTAS_PERMITIDAS_POR_ROL.get(rol, [])
+                if any(request.path.startswith(r) for r in rutas_del_rol):
+                    permitido = True
+                    break
 
-            if grupos_restrictivos_del_usuario:
-                permitido = False
-                for rol in grupos_restrictivos_del_usuario:
-                    rutas_del_rol = self.RUTAS_PERMITIDAS_POR_ROL[rol]
-                    if any(request.path.startswith(r) for r in rutas_del_rol):
-                        permitido = True
-                        break
-
-                if not permitido:
-                    return render(request, 'errors/sin_permiso.html', status=403)
-
+            if not permitido:
+                # Un cliente que intenta salir de su portal, regresa a él
+                if 'Cliente' in grupos_usuario:
+                    return redirect('/mi-credito/')
+                return render(request, 'errors/sin_permiso.html', status=403)
         return self.get_response(request)

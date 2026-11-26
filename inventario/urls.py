@@ -5,6 +5,7 @@ from . import views
 from .views.proveedor_Views import ProveedorCrearView, ProveedorEditarView
 from .views import kardex_Views
 from inventario.views import credito_Views
+from inventario.views import portal_cliente_Views
 
 
 
@@ -99,5 +100,9 @@ urlpatterns = [
     path('credito/cliente/<int:cliente_id>/corte/', credito_Views.corte_saldo_cliente_pdf, name='corte_saldo_cliente_pdf'),
     path('credito/movimiento/<int:movimiento_id>/editar/', credito_Views.editar_movimiento_credito, name='editar_movimiento_credito'),
     path('credito/movimiento/<int:movimiento_id>/obtener/', credito_Views.obtener_movimiento_credito, name='obtener_movimiento_credito'),
-
+    
+    
+        # Portal del cliente: siempre muestra la cuenta de quien inició sesión
+    path('mi-credito/', portal_cliente_Views.mi_credito, name='mi_credito'),
+    path('mi-credito/cargo/', portal_cliente_Views.mi_credito_registrar_cargo, name='mi_credito_cargo'),
 ]

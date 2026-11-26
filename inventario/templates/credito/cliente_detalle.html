@@ -10,17 +10,17 @@
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <span><i class="fas fa-user-tie text-primary"></i> {{ cliente.nombre }}</span>
       <div class="d-flex gap-2">
-        <a href="{% url 'inventario:detalle_cliente_credito_pdf' cliente.id %}"
-          class="btn btn-outline-danger btn-sm mr-2">
-          <i class="fas fa-file-pdf"></i> Descargar PDF
+        {% if not es_portal %}
+        <a href="{% url 'inventario:detalle_cliente_credito_pdf' cliente.id %}" ...>
+          ...Descargar PDF
         </a>
-        <a href="{% url 'inventario:corte_saldo_cliente_pdf' cliente.id %}" target="_blank"
-          class="btn btn-outline-primary btn-sm mr-2">
-          <i class="fas fa-cut"></i> Corte de saldo
+        <a href="{% url 'inventario:corte_saldo_cliente_pdf' cliente.id %}" ...>
+          ...Corte de saldo
         </a>
-        <a href="{% url 'inventario:clientes_credito_lista' %}" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-arrow-left"></i> Volver
+        <a href="{% url 'inventario:clientes_credito_lista' %}" ...>
+          ...Volver
         </a>
+        {% endif %}
       </div>
     </div>
     <div class="card-body">
@@ -28,19 +28,21 @@
       <div class="row g-2 mb-4">
         <div class="col-md-4">
           <div class="border rounded p-3 text-center">
-            <div class="text-muted small">Saldo actual (te debe)</div>
+            <div class="text-muted small">{% if es_portal %}Tu saldo{% else %}Saldo actual (te debe){% endif %}</div>
             <div class="h3 {% if saldo_actual > 0 %}text-danger{% else %}text-success{% endif %}">
               ${{ saldo_actual|intcomma }}
             </div>
           </div>
         </div>
-        <div class="col-md-8 d-flex align-items-center gap-2">
+        <div class="col-md-8 d-flex align-items-center gap-2">                      
           <button class="btn btn-danger flex-fill" onclick="abrirMovimiento('CARGO')">
             <i class="fas fa-plus-circle"></i> Registrar envío (cargo)
           </button>
+          {% if not es_portal %}
           <button class="btn btn-success flex-fill" onclick="abrirMovimiento('ABONO')">
             <i class="fas fa-hand-holding-usd"></i> Registrar pago (abono)
           </button>
+          {% endif %}
         </div>
       </div>
 
@@ -53,7 +55,7 @@
               <th>Cargo</th>
               <th>Abono</th>
               <th>Saldo</th>
-              <th>ACCIONES</th>
+              {% if not es_portal %}<th>ACCIONES</th>{% endif %}
               <th></th>
             </tr>
           </thead>
@@ -75,6 +77,7 @@
               <td class="text-center text-danger">{{ m.cargo|default:"—"|intcomma }}</td>
               <td class="text-center text-success">{{ m.abono|default:"—"|intcomma }}</td>
               <td class="text-center fw-bold">${{ m.saldo|intcomma }}</td>
+              {% if not es_portal %}
               <td class="text-center">
                 {% if m.tipo == 'CARGO' %}
                 <a href="{% url 'inventario:nota_credito_pdf' m.id %}" target="_blank" class="btn btn-primary btn-sm me-1"
@@ -97,6 +100,7 @@
                 </button>
                 {% endif %}
               </td>
+              {% endif %}
             </tr>
             {% empty %}
             <tr>
@@ -316,8 +320,8 @@
   }
 
   function enviarMovimiento(payload) {
-    fetch("{% url 'inventario:registrar_movimiento_credito' cliente.id %}", {
-      method: 'POST',
+    fetch("{% if es_portal %}{% url 'inventario:mi_credito_cargo' %}{% else %}{% url 'inventario:registrar_movimiento_credito' cliente.id %}{% endif %}", {
+    method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
       body: JSON.stringify(payload),
     })
