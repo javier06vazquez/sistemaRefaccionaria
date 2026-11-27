@@ -8,6 +8,7 @@
   <div class="card shadow">
     <div class="card-header bg-success text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
       <span><i class="fas fa-arrow-down text-white"></i> Entrada de Inventario</span>
+      <a href="{% url 'inventario:historial_movimientos' %}" class="btn btn-light btn-sm">
         <i class="fas fa-list"></i> Historial
       </a>
     </div>
@@ -43,7 +44,7 @@
       <hr>
 
       <div class="d-grid d-md-flex justify-content-md-end gap-2">
-        <button type="button" class="btn btn-outline-secondary w-100 w-md-auto" onclick="location.reload()">
+        <button type="button" class="btn btn-outline-secondary w-100 w-md-auto" onclick="limpiarTodo()">
           <i class="fas fa-eraser"></i> Limpiar todo
         </button>
         <button type="button" class="btn btn-success btn-lg w-100 w-md-auto" id="btnRegistrar">
@@ -59,13 +60,19 @@
 {% include 'partials/buscarProductosAjax.html' %}
 
 {% endblock %}
-
 {% block script %}
+<script src="{% static 'js/borrador.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'js/buscarProductoAjax.js' %}"></script>
 <script>
   let items = [];
   let contadorId = 0;
+
+  const CLAVE_BORRADOR = 'borrador_entrada';
+
+  function guardarBorrador() {
+    Borrador.guardar(CLAVE_BORRADOR, items);
+  }
 
   const MOTIVOS_ENTRADA = [
     { value: 'COMPRA', label: 'Compra a proveedor' },
@@ -125,8 +132,15 @@
     items = items.filter((i) => i.itemId !== itemId);
     render();
   }
+  function limpiarTodo() {
+    items = [];
+    contadorId = 0;
+    render();   // render() guarda la lista vacía en el borrador
+  }
 
   function render() {
+    guardarBorrador();   // 👈 primero guardamos, pase lo que pase
+
     const tabla = document.getElementById('listaProductos');
     const vacia = document.getElementById('listaVacia');
     const cuerpo = document.getElementById('cuerpoTabla');
@@ -170,6 +184,7 @@
     `).join('');
 
     document.getElementById('contador').innerText = items.length;
+    guardarBorrador();
   }
 
   document.getElementById('btnRegistrar').addEventListener('click', function () {
@@ -207,6 +222,7 @@
         .then((r) => r.json())
         .then((data) => {
           if (data.estado === 'ok') {
+            Borrador.borrar(CLAVE_BORRADOR);
             Swal.fire('Listo', `Se registraron ${data.cantidad} entradas.`, 'success')
               .then(() => location.reload());
           } else {
@@ -215,5 +231,13 @@
         });
     });
   });
+    // ===== Recuperar borrador al cargar la página =====
+  const borradorGuardado = Borrador.leer(CLAVE_BORRADOR);
+
+  if (Array.isArray(borradorGuardado) && borradorGuardado.length > 0) {
+    items = borradorGuardado;
+    contadorId = Math.max(...items.map((i) => i.itemId)) + 1;
+    render();
+  }
 </script>
 {% endblock %}

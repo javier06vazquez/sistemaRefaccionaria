@@ -1,5 +1,6 @@
 {% extends 'base/body.html' %}
 {% load humanize %}
+{% load static %}
 {% block headercontect %}
 {% include 'base/header/overlapHeader.html' %}
 {% endblock %}
@@ -182,8 +183,8 @@
 
 
 {% endblock %}
-
 {% block script %}
+<script src="{% static 'js/borrador.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   let tipoActual = null;
